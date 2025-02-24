@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>Manipulation de vue</title>
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body>
+
+<div id="monapp">
+	<button @click="titre = 'Cliqué!'">{{ titre }}</button>
+	<br>
+	<br>
+	<br>
+	<div>
+		<button @click="incrementer">++</button>
+		<span>{{ compteur }}</span>
+		<button @click="decrementer">--</button>
+	</div>
+
+	<br>
+	<br>
+	<br>
+
+	<input type="text" @input="verifyInput" v-model="inputt">
+	<p style="color: red;" v-if="afficher" >The text must not contain any spaces!</p>
+</div>
+
+
+<script>
+	const appli = {
+		data () {
+				return {
+					titre: "Cliquez moi!",
+					compteur: 0,
+					afficher: false, 
+					inputt: ""
+				}
+			},
+		methods: {
+			incrementer(){
+				this.compteur++;
+			},
+			decrementer(){
+				this.compteur--;
+			},
+			verifyInput(){
+				if (this.inputt.includes(" ")) this.afficher = true;
+				else this.afficher = false;
+			}
+		}
+	};
+	
+Vue.createApp(appli).mount("#monapp");
+</script>
+
+</body>
+</html>
