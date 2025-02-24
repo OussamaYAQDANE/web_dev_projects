@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Task Manager</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      body {
+        background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+        color: #333;
+        padding: 2rem;
+      }
+
+      #app {
+        max-width: 600px;
+        margin: 0 auto;
+      }
+      .task {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem;
+        margin: 1rem 0;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+      .task:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+      .completed {
+        background-color: #d1fae5;
+        text-decoration: line-through;
+        opacity: 0.85;
+      }
+
+      .task h3 {
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .filter-button {
+        margin: 0.5rem 0.25rem;
+        padding: 0.6rem 1.2rem;
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+        background-color: #e5e7eb;
+        color: #374151;
+        font-weight: bold;
+        transition: background-color 0.3s ease, color 0.3s ease;
+      }
+      .filter-button:hover {
+        background-color: #c7d2fe;
+      }
+      .active-filter {
+        background-color: #6366f1;
+        color: #fff;
+      }
+
+      .task button {
+        padding: 0.4rem 0.8rem;
+        margin-top: 1rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        background-color: #10b981;
+        color: #fff;
+        transition: background-color 0.3s ease;
+      }
+      .task button:hover {
+        background-color: #059669;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="app">
+      <task-list></task-list>
+    </div>
+
+    <script>
+      const TaskList = {
+        template: `
+                <div>
+                    <div>
+                        <button 
+                            @click="filter = 'all'"
+                            :class="{ 'active-filter': filter === 'all' }"
+                            class="filter-button"
+                            aria-label="Show all tasks">
+                            Toutes ({{ totalTasks }})
+                        </button>
+                        <button 
+                            @click="filter = 'active'"
+                            :class="{ 'active-filter': filter === 'active' }"
+                            class="filter-button"
+                            aria-label="Show active tasks">
+                            À faire ({{ activeTasks }})
+                        </button>
+                        <button 
+                            @click="filter = 'completed'"
+                            :class="{ 'active-filter': filter === 'completed' }"
+                            class="filter-button"
+                            aria-label="Show completed tasks">
+                            Terminées ({{ completedTasks }})
+                        </button>
+                    </div>
+                    
+                    <div v-for="task in filteredTasks" :key="task.id" class="task" :class="{ completed: task.completed }">
+                        <h3>{{ task.title }}</h3>
+                        <p>{{ task.description }}</p>
+                        <button 
+                            v-show="!task.completed"
+                            @click="completeTask(task.id)"
+                            aria-label="Mark task as completed">
+                            Marquer comme terminée
+                        </button>
+                        <button 
+                            v-show="task.completed"
+                            @click="completeTask(task.id)"
+                            aria-label="Mark task as uncompleted">
+                            Marquer comme non terminée
+                        </button>
+                    </div>
+                </div>
+            `,
+        data() {
+          return {
+            tasks: [],
+            filter: "all",
+          };
+        },
+        computed: {
+          filteredTasks() {
+            switch (this.filter) {
+              case "active":
+                return this.tasks.filter((task) => !task.completed);
+              case "completed":
+                return this.tasks.filter((task) => task.completed);
+              default:
+                return this.tasks;
+            }
+          },
+          totalTasks() {
+            return this.tasks.length;
+          },
+          activeTasks() {
+            return this.tasks.filter((task) => !task.completed).length;
+          },
+          completedTasks() {
+            return this.tasks.filter((task) => task.completed).length;
+          },
+        },
+        methods: {
+          completeTask(id) {
+            const task = this.tasks.find((task) => task.id === id);
+            if (task) {
+              task.completed = !task.completed;
+            }
+          },
+        },
+        async created() {
+          try {
+            const response = await fetch("tasks.json");
+            if (!response.ok) {
+              throw new Error("Network response was not ok");
+            }
+            this.tasks = await response.json();
+          } catch (error) {
+            console.error("Failed to fetch tasks:", error);
+            this.tasks = [
+                {
+                    id: 1,
+                    title: "Faire les courses",
+                    description: "Acheter des légumes et du lait.",
+                    completed: false
+                },
+                {
+                    id: 2,
+                    title: "Faire du sport",
+                    description: "Courir pendant 30 minutes.",
+                    completed: true
+                },
+                {
+                    id: 3,
+                    title: "Réviser pour l'examen",
+                    description: "Relire le chapitre 5 du manuel.",
+                    completed: false
+                }
+            ];
+          }
+        },
+      };
+
+      const app = Vue.createApp({});
+      app.component("task-list", TaskList);
+      app.mount("#app");
+    </script>
+  </body>
+</html>
