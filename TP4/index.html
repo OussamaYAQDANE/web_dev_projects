@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Les Bonnes Pièces</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.2.31/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        
+    </style>
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>Les Bonnes Pièces</h1>
+        </header>
+        <div class="panier-container">
+            <button class="panier-button" @click="togglePanier"> Voir le panier</button>
+            <div class="panier" :class="{ visible: panierVisible }">
+                <h3> Panier</h3>
+                <ul>
+                    <li v-for="(item, index) in panier" :key="index">
+                        {{ item.nom }} - {{ item.prix }} €
+                        <button class="delete-button" @click="supprimerDuPanier(index)">✖</button>
+                    </li>
+                </ul>
+                <p v-if="panier.length === 0">Votre panier est vide.</p>
+            </div>
+        </div>
+        <main>
+            <aside class="filtres">
+                <h3>Filtres de Recherche</h3>
+                <div>
+                    <input type="text" v-model="recherche" placeholder="Recherche des produits">
+                </div>
+                <div>
+                    <label for="categorie">Catégorie</label>
+                    <select v-model="categorie" id="categorie">
+                        <option value="">Toutes catégories</option>
+                        <option v-for="p in categories" :key="p" :value="p">{{ p }}</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="disponible">Disponibilité</label>
+                    <input type="checkbox" v-model="disponible" id="disponible">
+                </div> 
+                <div>
+                    <label for="trier">Trier par</label>
+                    <select v-model="trier" id="trier">
+                        <option value="">Trier par</option>
+                        <option value="croissant">Prix croissant</option>
+                        <option value="decroissant">Prix décroissant</option>
+                    </select>
+                </div>
+            </aside>
+            
+            <section class="fiches">
+                <div v-for="piece in piecesFiltrees" :key="piece.id" class="fiche">
+                    <img :src="piece.image" :alt="piece.nom">
+                    <h4>{{ piece.nom }}</h4>
+                    <p><strong>{{ piece.prix }} €</strong></p>
+                    <p v-if="piece.disponible" style="color:green;">✔ En stock</p>
+                    <p v-else style="color: red;">✖ Rupture de stock</p>
+                    <button @click="ajouterAuPanier(piece)" :disabled="!piece.disponible">Ajouter au panier</button>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    pieces: [], 
+                    recherche: '', 
+                    categorie: '', 
+                    disponible: false, 
+                    trier: '', 
+                    panier: [],
+                    panierVisible: false
+                };
+            },
+            computed: {
+                piecesFiltrees() {
+                    let resultat = [...this.pieces];
+                    if (this.recherche) {
+                        resultat = resultat.filter(piece =>
+                            piece.nom.toLowerCase().includes(this.recherche.toLowerCase())
+                        );
+                    }
+                    if (this.categorie) {
+                        resultat = resultat.filter(piece => piece.categorie === this.categorie);
+                    }
+                    if (this.disponible) {
+                        resultat = resultat.filter(piece => piece.disponible);
+                    }
+                    if (this.trier === 'croissant') {
+                        resultat.sort((a, b) => a.prix - b.prix);
+                    } else if (this.trier === 'decroissant') {
+                        resultat.sort((a, b) => b.prix - a.prix);
+                    }
+                    return resultat;
+                },
+                categories() {
+                    return [...new Set(this.pieces.map(piece => piece.categorie))];
+                }
+            },
+            methods: {
+                ajouterAuPanier(piece) {
+                    this.panier.push(piece);
+                },
+                supprimerDuPanier(index) {
+                    this.panier.splice(index, 1);
+                },
+                togglePanier() {
+                    this.panierVisible = !this.panierVisible;
+                }
+            },
+            mounted() {
+                fetch('./pieces-autos.json')
+                    .then(response => response.json())
+                    .then(data => {
+                        this.pieces = data.map(piece => ({
+                            ...piece,
+                            disponible: Math.random() > 0.5,
+                            image: `image_${piece.nom.toLowerCase().replace(/\s+/g, '_')}.jpg`
+                        }));
+                    });
+            }
+        });
+        app.mount("#app");
+    </script>
+</body>
+</html>
